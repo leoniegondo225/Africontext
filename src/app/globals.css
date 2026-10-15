@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+/*
+  Palette AfriContext.
+  Indigo : la teinture d'Afrique de l'Ouest, utilisée comme fond de nuit à la place du noir.
+  Chaque couleur d'accent a un seul sens :
+    safran = une action possible (installer, copier, publier)
+    tampon = vérifié par rapport à la doc officielle
+    erreur = quelque chose qu'un LLM a inventé
+*/
+@theme {
+  --color-nuit: #12153b;
+  --color-nuit-2: #191d4d;
+  --color-nuit-3: #232867;
+  --color-trait: #343a85;
+  --color-craie: #eceaf6;
+  --color-brume: #a9a8cf;
+  --color-voile: #7c7cb0;
+  --color-safran: #f2a93b;
+  --color-safran-2: #ffc46b;
+  --color-tampon: #62d6a4;
+  --color-erreur: #ff6b5e;
+
+  --font-sans: var(--font-instrument), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-martian), ui-monospace, monospace;
+
+  --text-display: clamp(2.9rem, 1.4rem + 6.4vw, 7.25rem);
+  --text-display--line-height: 0.9;
+  --text-title: clamp(2rem, 1.3rem + 2.6vw, 3.5rem);
+  --text-title--line-height: 1;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  background: var(--color-nuit);
+  color: var(--color-craie);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv11";
+  min-height: 100dvh;
+}
+
+::selection {
+  background: var(--color-safran);
+  color: var(--color-nuit);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-safran);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Cercles façon tissu adire (teinture à réserve), la seule texture du site. */
+.adire {
+  background-image:
+    radial-gradient(circle at center, transparent 0 9px, rgb(236 234 246 / 0.045) 9px 10px, transparent 10px 17px, rgb(236 234 246 / 0.03) 17px 18px, transparent 18px);
+  background-size: 44px 44px;
+}
+
+.display-wide {
+  font-stretch: 100%;
+  font-variation-settings: "wdth" 100;
+  letter-spacing: -0.035em;
+}
+.display-narrow {
+  font-stretch: 75%;
+  font-variation-settings: "wdth" 75;
+  letter-spacing: -0.02em;
+}
+
+/* Code */
+.code {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.75;
+  font-variation-settings: "wdth" 100;
+  tab-size: 2;
+}
+.tok-k { color: #b9a6ff; }
+.tok-s { color: #ffd9a0; }
+.tok-n { color: #8fd3ff; }
+.tok-c { color: var(--color-voile); font-style: italic; }
+.tok-p { color: var(--color-brume); }
+
+mark.invented {
+  background: rgb(255 107 94 / 0.16);
+  color: #ffb3aa;
+  text-decoration: line-through;
+  text-decoration-color: var(--color-erreur);
+  text-decoration-thickness: 2px;
+  border-radius: 3px;
+  padding: 0 2px;
+}
+mark.fixed {
+  background: rgb(98 214 164 / 0.14);
+  color: #b9f2d8;
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+/* Le tampon : il s'imprime une seule fois, comme un tampon encreur sur du papier. */
+@keyframes stamp-in {
+  0% { opacity: 0; transform: rotate(var(--r, -14deg)) scale(1.9); filter: blur(4px); }
+  60% { opacity: 1; transform: rotate(var(--r, -14deg)) scale(0.94); filter: blur(0); }
+  100% { opacity: 1; transform: rotate(var(--r, -14deg)) scale(1); }
+}
+.stamp-land {
+  animation: stamp-in 520ms cubic-bezier(0.2, 0.9, 0.25, 1.2) both;
+}
+
+@keyframes caret {
+  50% { opacity: 0; }
+}
+.caret::after {
+  content: "";
+  display: inline-block;
+  width: 0.55ch;
+  height: 1.1em;
+  margin-left: 2px;
+  vertical-align: -0.18em;
+  background: var(--color-safran);
+  animation: caret 1s steps(1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/* Barres de défilement fines dans les blocs de code */
+.scroll-thin { scrollbar-width: thin; scrollbar-color: var(--color-trait) transparent; }

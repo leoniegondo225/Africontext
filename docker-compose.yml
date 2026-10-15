@@ -1,0 +1,35 @@
+services:
+  web:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+
+  # Nightly doc watch (F12): calls the watch endpoint with the cron secret.
+  veille:
+    image: alpine:3.20
+    restart: unless-stopped
+    env_file: .env
+    command: >
+      sh -c "apk add --no-cache curl >/dev/null &&
+             echo '0 3 * * * curl -fsS -X POST http://web:3000/api/admin/watch -H \"x-cron-secret: $$CRON_SECRET\"' | crontab - &&
+             crond -f"
+    depends_on:
+      - web
+
+  # Target database (Prisma schema in prisma/). Replace with the Systalink managed instance in production.
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: africontext
+      POSTGRES_USER: africontext
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?définir POSTGRES_PASSWORD dans .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

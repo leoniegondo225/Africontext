@@ -1,0 +1,153 @@
+// Target schema from the cahier des charges, section 8.
+// The MVP runs on the in-memory store in src/lib/store.ts, which mirrors these
+// tables; switching to PostgreSQL replaces that file only.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  user
+  admin
+}
+
+enum ContextType {
+  cursorrules
+  claude_prompt
+  mcp_server
+}
+
+enum ContextStatus {
+  pending
+  approved
+  rejected
+  to_recheck
+}
+
+enum EventKind {
+  copy
+  install
+}
+
+model User {
+  id                String    @id @default(cuid())
+  nom               String
+  email             String?   @unique
+  mot_de_passe_hash String?
+  github_id         String?   @unique
+  github_url        String?
+  reputation_score  Int       @default(0)
+  role              Role      @default(user)
+  contexts          Context[]
+  votes             Vote[]
+  reports           Report[]
+  created_at        DateTime  @default(now())
+}
+
+model Context {
+  id               String           @id @default(cuid())
+  slug             String           @unique
+  title            String
+  description      String
+  type             ContextType
+  content_payload  String
+  service          String
+  pays             String[]
+  version_api      String
+  source_url       String
+  source_hash      String?
+  tested_with      String[]
+  status           ContextStatus    @default(pending)
+  last_verified_at DateTime
+  author           User             @relation(fields: [author_id], references: [id])
+  author_id        String
+  created_at       DateTime         @default(now())
+  versions         ContextVersion[]
+  tags             ContextTag[]
+  votes            Vote[]
+  proofs           Proof[]
+  reports          Report[]
+  events           Event[]
+
+  @@index([service])
+  @@index([status])
+}
+
+model ContextVersion {
+  id              String   @id @default(cuid())
+  context         Context  @relation(fields: [context_id], references: [id], onDelete: Cascade)
+  context_id      String
+  content_payload String
+  note            String?
+  created_at      DateTime @default(now())
+}
+
+model Tag {
+  id       String       @id @default(cuid())
+  name     String       @unique
+  contexts ContextTag[]
+}
+
+model ContextTag {
+  context    Context @relation(fields: [context_id], references: [id], onDelete: Cascade)
+  context_id String
+  tag        Tag     @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+  tag_id     String
+
+  @@id([context_id, tag_id])
+}
+
+model Vote {
+  id         String  @id @default(cuid())
+  user       User    @relation(fields: [user_id], references: [id])
+  user_id    String
+  context    Context @relation(fields: [context_id], references: [id], onDelete: Cascade)
+  context_id String
+  value      Int
+
+  @@unique([user_id, context_id])
+}
+
+model Proof {
+  id                    String   @id @default(cuid())
+  context               Context  @relation(fields: [context_id], references: [id], onDelete: Cascade)
+  context_id            String
+  prompt                String
+  output_sans_contexte  String
+  output_avec_contexte  String
+  modele                String
+  created_at            DateTime @default(now())
+}
+
+model Mock {
+  id                String @id @default(cuid())
+  service           String @unique
+  base_path         String
+  fixtures          Json
+  exemples_webhook  Json
+}
+
+model Report {
+  id         String  @id @default(cuid())
+  context    Context @relation(fields: [context_id], references: [id], onDelete: Cascade)
+  context_id String
+  user       User?   @relation(fields: [user_id], references: [id])
+  user_id    String?
+  raison     String
+  status     String  @default("open")
+}
+
+model Event {
+  id         String    @id @default(cuid())
+  context    Context   @relation(fields: [context_id], references: [id], onDelete: Cascade)
+  context_id String
+  kind       EventKind
+  created_at DateTime  @default(now())
+
+  @@index([context_id, kind])
+}
