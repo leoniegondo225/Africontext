@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { countryName } from "./countries";
 import { PROOFS } from "./proofs";
 import { filterContexts, type SearchQuery } from "./search";
 import { parseContextFile, splitSections } from "./spec";
@@ -94,4 +95,24 @@ export function impactTotals() {
   const copies = list.reduce((n, c) => n + c.stats.copies, 0);
   const installs = list.reduce((n, c) => n + c.stats.installs, 0);
   return { copies, installs, contexts: publicContexts().length };
+}
+
+/**
+ * Données du globe de couverture : nombre de contextes par pays, et un arc entre
+ * deux pays dès qu'un même service y est couvert.
+ */
+export function coverageGlobe(list = publicContexts()) {
+  const counts = new Map<string, number>();
+  const links = new Set<string>();
+  for (const c of list) {
+    if (c.category === "outillage") continue;
+    c.pays.forEach((p, i) => {
+      counts.set(p, (counts.get(p) ?? 0) + 1);
+      if (i > 0) links.add([c.pays[i - 1], p].sort().join(":"));
+    });
+  }
+  return {
+    points: [...counts].map(([code, count]) => ({ code, label: countryName(code), count })),
+    links: [...links].map((l) => l.split(":") as [string, string]),
+  };
 }

@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { publicContexts } from "./catalog";
+import { setContextStatus, setSourceHash } from "./persist";
 import { store } from "./store";
 
 export interface WatchResult {
@@ -35,10 +36,10 @@ export async function runWatch(): Promise<WatchResult[]> {
         if (!res.ok) return { slug: ctx.slug, source_url: ctx.source_url, outcome: "unreachable" };
         const hash = createHash("sha256").update(normalize(await res.text())).digest("hex").slice(0, 16);
         const prev = s.sourceHashes.get(ctx.slug);
-        s.sourceHashes.set(ctx.slug, { hash, checkedAt: Date.now() });
+        setSourceHash(ctx.slug, hash);
         if (!prev) return { slug: ctx.slug, source_url: ctx.source_url, outcome: "baseline", hash };
         if (prev.hash === hash) return { slug: ctx.slug, source_url: ctx.source_url, outcome: "unchanged", hash };
-        s.status.set(ctx.slug, "to_recheck");
+        setContextStatus(ctx.slug, "to_recheck");
         return { slug: ctx.slug, source_url: ctx.source_url, outcome: "changed", hash };
       } catch {
         return { slug: ctx.slug, source_url: ctx.source_url, outcome: "unreachable" };

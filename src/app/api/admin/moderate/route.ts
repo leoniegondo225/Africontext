@@ -1,7 +1,7 @@
 import { getSession } from "@/lib/auth";
 import { getContext } from "@/lib/catalog";
 import { json } from "@/lib/http";
-import { store } from "@/lib/store";
+import { setContextStatus, setSourceHash } from "@/lib/persist";
 import type { ContextStatus } from "@/lib/types";
 
 const ACTIONS: Record<string, ContextStatus> = {
@@ -18,15 +18,12 @@ export async function POST(req: Request) {
   if (!slug || !action || !(action in ACTIONS || action === "simulate-change")) return json({ error: "slug et action requis" }, 400);
   if (!getContext(slug)) return json({ error: "Contexte introuvable" }, 404);
 
-  const s = store();
   if (action === "simulate-change") {
     // Démo de la veille : on met une empreinte périmée pour que la prochaine vérification voie la doc comme modifiée.
-    s.sourceHashes.set(slug, { hash: "empreinte-perimee", checkedAt: Date.now() });
+    setSourceHash(slug, "empreinte-perimee");
     return json({ ok: true, slug });
   }
   const status = ACTIONS[action];
-  s.status.set(slug, status);
-  // Ré-approuver efface l'empreinte : la prochaine veille repart d'une nouvelle référence.
-  if (status === "approved") s.sourceHashes.delete(slug);
+  setContextStatus(slug, status);
   return json({ ok: true, slug, status });
 }

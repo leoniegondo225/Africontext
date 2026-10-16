@@ -1,6 +1,6 @@
 import { getContext } from "@/lib/catalog";
 import { EXPORT_FILES, exportFor } from "@/lib/spec";
-import { recordEvent } from "@/lib/store";
+import { logEvent } from "@/lib/persist";
 import type { ExportTool } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
   }
   const toolParam = new URL(req.url).searchParams.get("tool") ?? "cursor";
   const tool: ExportTool = toolParam in EXPORT_FILES ? (toolParam as ExportTool) : "cursor";
-  if (req.headers.get("x-africontext-cli")) recordEvent(slug, "install");
+  if (req.headers.get("x-africontext-cli")) logEvent(slug, "install");
 
   return new Response(exportFor(tool, ctx), {
     headers: {

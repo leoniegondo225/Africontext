@@ -1,6 +1,6 @@
 import { getContext } from "@/lib/catalog";
 import { clientIp, json, rateLimit, tooMany } from "@/lib/http";
-import { recordEvent } from "@/lib/store";
+import { logEvent } from "@/lib/persist";
 
 export async function POST(req: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -8,5 +8,5 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
   if (!getContext(slug)) return json({ error: "Contexte introuvable" }, 404);
   const body = (await req.json().catch(() => ({}))) as { kind?: string };
   const kind = body.kind === "install" ? "install" : "copy";
-  return json(recordEvent(slug, kind));
+  return json(logEvent(slug, kind));
 }

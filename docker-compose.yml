@@ -6,7 +6,20 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - db
+      migrate:
+        condition: service_completed_successfully
+
+  # Applique les migrations Prisma (prisma/migrations) avant le démarrage de l'application.
+  migrate:
+    build:
+      context: .
+      target: build
+    env_file: .env
+    command: ["pnpm", "db:migrate"]
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
 
   # Nightly doc watch (F12): calls the watch endpoint with the cron secret.
   veille:
@@ -20,7 +33,7 @@ services:
     depends_on:
       - web
 
-  # Target database (Prisma schema in prisma/). Replace with the Systalink managed instance in production.
+  # Base PostgreSQL (schéma Prisma dans prisma/). Pour l'instance managée Systalink, pointez DATABASE_URL dessus.
   db:
     image: postgres:16-alpine
     restart: unless-stopped
@@ -30,6 +43,11 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?définir POSTGRES_PASSWORD dans .env}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U africontext -d africontext"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
 volumes:
   pgdata:

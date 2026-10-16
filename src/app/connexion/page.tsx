@@ -8,10 +8,20 @@ const ERRORS: Record<string, string> = {
   "github-non-configure": "La connexion GitHub n'est pas encore configurée sur ce serveur. Utilisez la connexion démo ci-dessous.",
   "etat-invalide": "La connexion a expiré. Recommencez depuis cette page.",
   github: "GitHub a refusé la connexion. Recommencez, ou vérifiez que l'application OAuth est autorisée.",
+  identifiants: "Email ou mot de passe incorrect.",
+  "trop-de-tentatives": "Trop de tentatives. Patientez une minute avant de réessayer.",
+  nom: "Indiquez votre nom (2 caractères au moins).",
+  email: "Cette adresse email n'est pas valide.",
+  "mot-de-passe": "Le mot de passe doit faire entre 10 et 128 caractères.",
+  "email-pris": "Un compte existe déjà avec cet email. Connectez-vous.",
 };
 
-export default async function ConnexionPage({ searchParams }: { searchParams: Promise<{ erreur?: string }> }) {
-  const { erreur } = await searchParams;
+const input =
+  "mt-1.5 w-full rounded-lg border border-trait bg-nuit-2 px-3 py-2.5 text-craie placeholder:text-voile focus:border-safran focus:outline-none";
+
+export default async function ConnexionPage({ searchParams }: { searchParams: Promise<{ erreur?: string; mode?: string }> }) {
+  const { erreur, mode } = await searchParams;
+  const signup = mode === "inscription";
   const user = await getSession();
   const demo = !githubConfigured() || process.env.DEMO_LOGIN === "1";
 
@@ -43,6 +53,44 @@ export default async function ConnexionPage({ searchParams }: { searchParams: Pr
             </svg>
             Continuer avec GitHub
           </a>
+
+          <div className="flex items-center gap-3 text-xs uppercase tracking-widest text-voile" aria-hidden="true">
+            <span className="h-px flex-1 bg-trait" /> ou par email <span className="h-px flex-1 bg-trait" />
+          </div>
+
+          <form action={signup ? "/api/auth/register" : "/api/auth/login"} method="post" className="space-y-4 rounded-2xl border border-trait p-5">
+            {signup ? (
+              <label className="block text-sm text-brume">
+                Nom
+                <input name="nom" required minLength={2} maxLength={80} autoComplete="name" className={input} />
+              </label>
+            ) : null}
+            <label className="block text-sm text-brume">
+              Email
+              <input name="email" type="email" required autoComplete="email" className={input} />
+            </label>
+            <label className="block text-sm text-brume">
+              Mot de passe{signup ? " (10 caractères au moins)" : ""}
+              <input
+                name="password"
+                type="password"
+                required
+                minLength={signup ? 10 : undefined}
+                maxLength={128}
+                autoComplete={signup ? "new-password" : "current-password"}
+                className={input}
+              />
+            </label>
+            <button className="w-full rounded-full bg-safran px-5 py-2.5 font-semibold text-nuit hover:bg-safran-2">
+              {signup ? "Créer mon compte" : "Se connecter"}
+            </button>
+            <p className="text-center text-sm text-brume">
+              {signup ? "Déjà inscrit ? " : "Pas encore de compte ? "}
+              <a href={signup ? "/connexion" : "/connexion?mode=inscription"} className="text-craie underline decoration-trait underline-offset-4 hover:decoration-safran">
+                {signup ? "Se connecter" : "Créer un compte"}
+              </a>
+            </p>
+          </form>
           {demo ? (
             <div className="rounded-2xl border border-trait p-5">
               <p className="text-sm text-brume">Connexion démo pour le jury, sans compte GitHub.</p>

@@ -2,11 +2,13 @@ FROM node:22-alpine AS deps
 WORKDIR /app
 RUN corepack enable
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+# Le client Prisma est généré à la compilation (pnpm build), une fois le schéma copié.
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 FROM node:22-alpine AS build
 WORKDIR /app
-RUN corepack enable
+# openssl : requis par le moteur de migration Prisma (service « migrate » du compose).
+RUN apk add --no-cache openssl && corepack enable
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN pnpm build

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AfricaGlobe } from "@/components/africa-globe";
 import { formatNumber } from "@/components/context-row";
-import { impactTotals, publicContexts } from "@/lib/catalog";
+import { coverageGlobe, impactTotals, publicContexts } from "@/lib/catalog";
 import { countryName } from "@/lib/countries";
 import { MINUTES_SAVED_PER_INSTALL } from "@/lib/store";
 
@@ -17,6 +18,7 @@ export default function ImpactPage() {
   // Carte de couverture : pays × services, pour montrer où le catalogue a des trous.
   const services = [...new Set(list.filter((c) => c.category !== "outillage").map((c) => c.service))];
   const countries = [...new Set(list.flatMap((c) => c.pays))].sort((a, b) => countryName(a).localeCompare(countryName(b), "fr"));
+  const globe = coverageGlobe(list);
   const covered = new Map(list.flatMap((c) => c.pays.map((p) => [`${p}:${c.service}`, c.slug] as const)));
 
   return (
@@ -73,6 +75,19 @@ export default function ImpactPage() {
           Carte de couverture
         </h2>
         <p className="mt-2 max-w-[60ch] text-brume">Chaque case vide est un service qu&apos;aucun contexte ne couvre encore dans ce pays.</p>
+        <div className="mt-8 grid items-center gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
+          <AfricaGlobe
+            points={globe.points}
+            links={globe.links}
+            interactive
+            label={`Globe interactif des ${globe.points.length} pays couverts`}
+            className="mx-auto aspect-square w-full max-w-[560px]"
+          />
+          <p className="text-sm leading-relaxed text-voile">
+            Faites tourner le globe. Chaque point vert est un pays couvert, d&apos;autant plus gros qu&apos;il a de contextes. Un arc relie deux pays
+            qui partagent un même service, comme Wave entre le Sénégal et la Côte d&apos;Ivoire.
+          </p>
+        </div>
         <div className="mt-8 overflow-x-auto scroll-thin">
           <table className="border-separate border-spacing-1 text-sm">
             <thead>

@@ -23,6 +23,7 @@ export function SubmitStudio({ signedIn, example }: { signedIn: boolean; example
   const [raw, setRaw] = useState("");
   const [drafting, setDrafting] = useState(false);
   const [draftError, setDraftError] = useState("");
+  const [draftSource, setDraftSource] = useState<"ia" | "squelette" | null>(null);
   const [result, setResult] = useState<Result>({ kind: "idle" });
 
   const report: SpecReport | null = useMemo(() => (raw.trim() ? validateSpec(raw) : null), [raw]);
@@ -33,12 +34,18 @@ export function SubmitStudio({ signedIn, example }: { signedIn: boolean; example
   const draft = async (e: React.FormEvent) => {
     e.preventDefault();
     setDraftError("");
+    setDraftSource(null);
     setDrafting(true);
     const res = await fetch("/api/draft", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) });
-    const data = (await res.json()) as { draft?: string; error?: string };
+    const data = (await res.json().catch(() => ({ error: "Le serveur n'a pas répondu. Réessayez." }))) as {
+      draft?: string;
+      error?: string;
+      source?: "ia" | "squelette";
+    };
     setDrafting(false);
     if (data.draft) {
       setRaw(data.draft);
+      setDraftSource(data.source ?? "squelette");
       setResult({ kind: "idle" });
     } else setDraftError(data.error ?? "Brouillon impossible");
   };
@@ -86,7 +93,7 @@ export function SubmitStudio({ signedIn, example }: { signedIn: boolean; example
               disabled={drafting || !signedIn}
               className="h-11 rounded-xl bg-craie px-4 text-sm font-semibold text-nuit disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {drafting ? "Préparation…" : "Générer le brouillon"}
+              {drafting ? "Lecture de la doc…" : "Générer le brouillon"}
             </button>
           </div>
           {!signedIn ? (
@@ -95,6 +102,21 @@ export function SubmitStudio({ signedIn, example }: { signedIn: boolean; example
                 Connectez-vous
               </Link>{" "}
               pour générer un brouillon et publier.
+            </p>
+          ) : null}
+          {drafting ? (
+            <p className="mt-3 text-sm text-voile" role="status">
+              Claude lit la documentation et remplit les huit sections. Comptez une trentaine de secondes.
+            </p>
+          ) : null}
+          {draftSource === "ia" ? (
+            <p className="mt-3 text-sm text-tampon" role="status">
+              Brouillon rédigé par Claude depuis la doc. Relisez chaque section : tout « Non documenté » est à vérifier avant de publier.
+            </p>
+          ) : null}
+          {draftSource === "squelette" ? (
+            <p className="mt-3 text-sm text-safran-2" role="status">
+              Squelette prêt : la rédaction par IA n&apos;est pas disponible pour le moment. Complétez chaque « À compléter ».
             </p>
           ) : null}
           {draftError ? <p className="mt-3 text-sm text-erreur">{draftError}</p> : null}

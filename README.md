@@ -12,6 +12,7 @@ pnpm dev               # http://localhost:3000
 ```
 
 Sans GitHub OAuth configuré, la page `/connexion` propose une connexion démo « Contributeur » ou « Administrateur ».
+Sans `DATABASE_URL`, l'application tourne en mémoire (rien n'est conservé au redémarrage).
 
 ## Ce qui est livré
 
@@ -19,7 +20,7 @@ Sans GitHub OAuth configuré, la page `/connexion` propose une connexion démo �
 | --- | --- | --- |
 | F1 | Recherche par service, pays, tag (insensible aux accents : « senegal » trouve SN) | `/contextes`, `GET /api/contexts?q=` |
 | F2 | Fiche détaillée, copie en un clic | `/contextes/[slug]` |
-| F3 | Connexion GitHub OAuth, session signée | `/connexion`, `/api/auth/*` |
+| F3 | Inscription et connexion par email (mot de passe haché bcrypt), GitHub OAuth, session signée | `/connexion`, `/api/auth/*`, `src/lib/users.ts` |
 | F4 | Soumission validée par la Spec, contrôle en direct | `/contribuer`, `POST /api/submit` |
 | F5 | Votes, un par utilisateur et par contexte | `POST /api/contexts/[slug]/vote` |
 | F6 | Scan de secrets, back-office de modération | `src/lib/spec.ts`, `/admin` |
@@ -27,7 +28,7 @@ Sans GitHub OAuth configuré, la page `/connexion` propose une connexion démo �
 | F8 | CLI `npx africontext add <slug>` | `cli/` |
 | F9 | Preuve avant / après, badge « testé avec » | `src/lib/proofs.ts` |
 | F10 | Sandboxes Wave, Orange Money, FedaPay avec webhooks signés | `/sandbox`, `/api/sandbox/[service]/...` |
-| F11 | Brouillon depuis l'URL d'une doc | `POST /api/draft` (squelette ; l'appel IA se branche dans `src/lib/draft.ts`) |
+| F11 | Brouillon rédigé par Claude depuis l'URL d'une doc (outil web_fetch, limité au domaine de la doc), relu par l'auteur | `POST /api/draft`, `src/lib/draft-ai.ts` (squelette si `ANTHROPIC_API_KEY` absent) |
 | F12 | Veille d'obsolescence par empreinte de la doc source | `src/lib/watch.ts`, service `veille` du compose |
 | F16 | Compteurs d'impact, carte de couverture | `/impact` |
 
@@ -36,8 +37,14 @@ Le responsable contenu doit les revérifier sur les documentations officielles a
 
 ## Données
 
-Le MVP tourne sur un store en mémoire (`src/lib/store.ts`) qui reproduit les tables du cahier des charges.
-Le schéma cible PostgreSQL est dans `prisma/schema.prisma`. Votes, soumissions et compteurs sont perdus au redémarrage tant que ce store n'est pas branché sur Prisma.
+PostgreSQL via Prisma 7 : schéma dans `prisma/schema.prisma`, migrations dans `prisma/migrations/`.
+Au démarrage (`src/instrumentation.ts`), les contextes de `content/` sont insérés en base, puis soumissions, statuts,
+empreintes, votes, événements et signalements sont rechargés dans le cache mémoire (`src/lib/store.ts`).
+Chaque écriture passe par `src/lib/persist.ts`, qui met à jour le cache puis la base.
+
+```bash
+DATABASE_URL=postgresql://... pnpm db:migrate   # applique les migrations
+```
 
 ## CLI
 
@@ -52,5 +59,5 @@ Publier `cli/` sur npm sous le nom `africontext` pour que `npx africontext` fonc
 
 ```bash
 cp .env.example .env   # remplir AUTH_SECRET, CRON_SECRET, POSTGRES_PASSWORD, GitHub OAuth
-docker compose up -d --build
+docker compose up -d --build   # le service migrate applique les migrations avant de lancer web
 ```

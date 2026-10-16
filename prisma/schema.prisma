@@ -1,14 +1,15 @@
-// Target schema from the cahier des charges, section 8.
-// The MVP runs on the in-memory store in src/lib/store.ts, which mirrors these
-// tables; switching to PostgreSQL replaces that file only.
+// Schéma du cahier des charges, section 8. L'URL de connexion est dans prisma.config.ts.
+// Quand DATABASE_URL est défini, src/lib/persist.ts recharge ces tables au démarrage
+// dans le cache mémoire (src/lib/store.ts) et y écrit chaque changement.
+// Les identifiants sont explicites : User.id est le login de session, Context.id est le slug.
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum Role {
@@ -35,7 +36,7 @@ enum EventKind {
 }
 
 model User {
-  id                String    @id @default(cuid())
+  id                String    @id
   nom               String
   email             String?   @unique
   mot_de_passe_hash String?
@@ -50,29 +51,30 @@ model User {
 }
 
 model Context {
-  id               String           @id @default(cuid())
-  slug             String           @unique
-  title            String
-  description      String
-  type             ContextType
-  content_payload  String
-  service          String
-  pays             String[]
-  version_api      String
-  source_url       String
-  source_hash      String?
-  tested_with      String[]
-  status           ContextStatus    @default(pending)
-  last_verified_at DateTime
-  author           User             @relation(fields: [author_id], references: [id])
-  author_id        String
-  created_at       DateTime         @default(now())
-  versions         ContextVersion[]
-  tags             ContextTag[]
-  votes            Vote[]
-  proofs           Proof[]
-  reports          Report[]
-  events           Event[]
+  id                String           @id
+  slug              String           @unique
+  title             String
+  description       String
+  type              ContextType
+  content_payload   String
+  service           String
+  pays              String[]
+  version_api       String
+  source_url        String
+  source_hash       String?
+  source_checked_at DateTime?
+  tested_with       String[]
+  status            ContextStatus    @default(pending)
+  last_verified_at  DateTime
+  author            User             @relation(fields: [author_id], references: [id])
+  author_id         String
+  created_at        DateTime         @default(now())
+  versions          ContextVersion[]
+  tags              ContextTag[]
+  votes             Vote[]
+  proofs            Proof[]
+  reports           Report[]
+  events            Event[]
 
   @@index([service])
   @@index([status])
@@ -114,32 +116,33 @@ model Vote {
 }
 
 model Proof {
-  id                    String   @id @default(cuid())
-  context               Context  @relation(fields: [context_id], references: [id], onDelete: Cascade)
-  context_id            String
-  prompt                String
-  output_sans_contexte  String
-  output_avec_contexte  String
-  modele                String
-  created_at            DateTime @default(now())
+  id                   String   @id @default(cuid())
+  context              Context  @relation(fields: [context_id], references: [id], onDelete: Cascade)
+  context_id           String
+  prompt               String
+  output_sans_contexte String
+  output_avec_contexte String
+  modele               String
+  created_at           DateTime @default(now())
 }
 
 model Mock {
-  id                String @id @default(cuid())
-  service           String @unique
-  base_path         String
-  fixtures          Json
-  exemples_webhook  Json
+  id               String @id @default(cuid())
+  service          String @unique
+  base_path        String
+  fixtures         Json
+  exemples_webhook Json
 }
 
 model Report {
-  id         String  @id @default(cuid())
-  context    Context @relation(fields: [context_id], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  context    Context  @relation(fields: [context_id], references: [id], onDelete: Cascade)
   context_id String
-  user       User?   @relation(fields: [user_id], references: [id])
+  user       User?    @relation(fields: [user_id], references: [id])
   user_id    String?
   raison     String
-  status     String  @default("open")
+  status     String   @default("open")
+  created_at DateTime @default(now())
 }
 
 model Event {

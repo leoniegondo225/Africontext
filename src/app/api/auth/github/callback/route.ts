@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { SESSION_COOKIE, encodeSession, roleFor, sessionCookieOptions } from "@/lib/auth";
+import { saveGithubUser } from "@/lib/persist";
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -22,11 +23,13 @@ export async function GET(req: Request) {
   const userRes = await fetch("https://api.github.com/user", {
     headers: { Authorization: "Bearer " + access_token, "User-Agent": "africontext" },
   });
-  const gh = (await userRes.json()) as { login: string; name?: string; avatar_url: string };
+  const gh = (await userRes.json()) as { id: number; login: string; name?: string; avatar_url: string };
+  const role = roleFor(gh.login);
+  saveGithubUser(gh.login, gh.name ?? gh.login, String(gh.id), role);
 
   jar.set(
     SESSION_COOKIE,
-    encodeSession({ login: gh.login, name: gh.name ?? gh.login, avatar: gh.avatar_url, role: roleFor(gh.login) }),
+    encodeSession({ login: gh.login, name: gh.name ?? gh.login, avatar: gh.avatar_url, role }),
     sessionCookieOptions,
   );
   return Response.redirect(new URL("/contribuer", req.url));

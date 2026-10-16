@@ -106,14 +106,29 @@ mark.fixed {
   padding: 0 2px;
 }
 
-/* Le tampon : il s'imprime une seule fois, comme un tampon encreur sur du papier. */
+/* Le tampon : il s'imprime une seule fois, comme un tampon encreur sur du papier.
+   En 3D : il descend incliné vers la page, frappe, rebondit à peine, et l'encre bave. */
 @keyframes stamp-in {
-  0% { opacity: 0; transform: rotate(var(--r, -14deg)) scale(1.9); filter: blur(4px); }
-  60% { opacity: 1; transform: rotate(var(--r, -14deg)) scale(0.94); filter: blur(0); }
-  100% { opacity: 1; transform: rotate(var(--r, -14deg)) scale(1); }
+  0% {
+    opacity: 0;
+    transform: perspective(700px) translate3d(18px, -46px, 260px) rotateX(48deg) rotateY(-22deg) rotate(var(--r, -14deg));
+    filter: blur(3px) drop-shadow(26px 40px 18px rgb(0 0 0 / 0.55));
+  }
+  55% {
+    opacity: 1;
+    transform: perspective(700px) translate3d(0, 0, 0) rotateX(0) rotateY(0) rotate(var(--r, -14deg)) scale(0.93);
+    filter: blur(0) drop-shadow(0 0 0 rgb(0 0 0 / 0));
+  }
+  72% { transform: perspective(700px) translate3d(0, 0, 14px) rotateX(-6deg) rotateY(3deg) rotate(var(--r, -14deg)) scale(1.03); }
+  100% {
+    opacity: 1;
+    transform: perspective(700px) rotate(var(--r, -14deg)) scale(1);
+    filter: drop-shadow(0 0 10px color-mix(in srgb, currentColor 35%, transparent));
+  }
 }
 .stamp-land {
-  animation: stamp-in 520ms cubic-bezier(0.2, 0.9, 0.25, 1.2) both;
+  transform-style: preserve-3d;
+  animation: stamp-in 760ms cubic-bezier(0.3, 0.85, 0.3, 1.15) both;
 }
 
 @keyframes caret {

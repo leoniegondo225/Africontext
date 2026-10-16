@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { AfricaGlobe } from "@/components/africa-globe";
 import { ContextRow, formatNumber } from "@/components/context-row";
 import { CopyCommand } from "@/components/copy-command";
 import { ProofDiff } from "@/components/proof-diff";
 import { Stamp } from "@/components/stamp";
-import { getContext, impactTotals, publicContexts } from "@/lib/catalog";
+import { coverageGlobe, getContext, impactTotals, publicContexts } from "@/lib/catalog";
 import { MINUTES_SAVED_PER_INSTALL } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
@@ -40,19 +41,29 @@ export default function Home() {
   const top = publicContexts().slice(0, 6);
   const totals = impactTotals();
   const hours = Math.round((totals.installs * MINUTES_SAVED_PER_INSTALL) / 60);
+  const globe = coverageGlobe();
 
   return (
     <>
       {/* Bandeau d'accueil */}
       <section className="adire relative overflow-hidden">
-        <div className="mx-auto max-w-[1240px] px-4 pb-20 pt-16 sm:px-6 sm:pt-24">
-          <h1 className="max-w-[16ch] text-display font-semibold" aria-label="L'IA invente /v1/pay. AfriContext lui donne la vraie documentation.">
-            <span className="display-wide block">L&apos;IA invente</span>
-            <span className="relative mt-2 inline-block font-mono text-[0.62em] font-normal tracking-[-0.04em] text-erreur" aria-hidden="true">
-              /v1/pay
-              <span className="absolute left-[-0.06em] right-[-0.06em] top-[54%] h-[0.09em] -rotate-2 bg-erreur" />
-            </span>
-          </h1>
+        <div className="relative mx-auto max-w-[1240px] px-4 pb-20 pt-16 sm:px-6 sm:pt-24">
+          <div className="lg:grid lg:grid-cols-[auto_minmax(0,1fr)] lg:items-center lg:gap-16 xl:gap-20">
+            {/* Globe décoratif : les pays déjà couverts par le catalogue */}
+            <AfricaGlobe
+              points={globe.points}
+              links={globe.links}
+              label={`Globe des ${globe.points.length} pays couverts par le catalogue`}
+              className="pointer-events-none -my-10 hidden h-[480px] w-[480px] shrink-0 opacity-80 lg:block xl:h-[580px] xl:w-[580px]"
+            />
+            <h1 className="max-w-[16ch] text-display font-semibold lg:justify-self-end lg:text-[clamp(3.5rem,5.6vw,5.75rem)]" aria-label="L'IA invente /v1/pay. AfriContext lui donne la vraie documentation.">
+              <span className="display-wide block">L&apos;IA invente</span>
+              <span className="relative mt-2 inline-block font-mono text-[0.62em] font-normal tracking-[-0.04em] text-erreur" aria-hidden="true">
+                /v1/pay
+                <span className="absolute left-[-0.06em] right-[-0.06em] top-[54%] h-[0.09em] -rotate-2 bg-erreur" />
+              </span>
+            </h1>
+          </div>
           <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-end">
             <p className="max-w-[44ch] text-[1.3rem] leading-[1.45] text-brume sm:text-[1.5rem]">
               Wave n&apos;a jamais eu cet endpoint. AfriContext donne à Cursor et Claude Code la vraie documentation de Wave, Orange Money,

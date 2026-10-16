@@ -1,9 +1,9 @@
 import type { ContextStats, ContextStatus } from "./types";
 
 /**
- * Stockage en mémoire des votes, événements et de la modération. Sa forme copie les tables
- * Prisma (Votes, Events, Reports, Contexts.status) : passer à PostgreSQL
- * ne demandera de modifier que ce fichier.
+ * Cache mémoire des votes, événements et de la modération. Sa forme copie les tables
+ * Prisma (Votes, Events, Reports, Contexts.status). Il est rechargé depuis PostgreSQL au
+ * démarrage, et chaque écriture y est répercutée par src/lib/persist.ts.
  */
 export interface Submission {
   id: string;

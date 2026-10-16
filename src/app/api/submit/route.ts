@@ -1,9 +1,8 @@
-import { randomUUID } from "node:crypto";
 import { getSession } from "@/lib/auth";
 import { allContexts } from "@/lib/catalog";
 import { clientIp, json, rateLimit, tooMany } from "@/lib/http";
 import { validateSpec } from "@/lib/spec";
-import { store } from "@/lib/store";
+import { submitContext } from "@/lib/persist";
 
 /**
  * POST /api/submit { raw, dryRun? }
@@ -44,8 +43,8 @@ export async function POST(req: Request) {
   if (dryRun) return json({ ok: true, report });
 
   const user = await getSession();
-  if (!user) return json({ ok: false, message: "Connectez-vous avec GitHub pour publier." }, 401);
+  if (!user) return json({ ok: false, message: "Connectez-vous pour publier." }, 401);
 
-  store().submissions.unshift({ id: randomUUID(), slug, raw, author: user.login, createdAt: new Date().toISOString() });
+  await submitContext(raw, user.login, user.name);
   return json({ ok: true, status: "pending", slug, report });
 }

@@ -61,9 +61,9 @@ export default async function ContextPage({ params }: Params) {
         </div>
         <div className="flex items-start justify-start lg:justify-end">
           {recheck ? (
-            <Stamp ring="Doc source modifiée" center="À REVOIR" sub={formatStampDate(ctx.last_verified_at)} tone="erreur" size={168} rotate={9} />
+            <Stamp ring="Doc source modifiée" center="À REVOIR" sub={formatStampDate(ctx.last_verified_at)} tone="erreur" size={168} rotate={9} animate />
           ) : (
-            <Stamp ring="Vérifié sur la doc officielle" center={formatStampDate(ctx.last_verified_at)} sub={"API " + ctx.version_api} size={168} />
+            <Stamp ring="Vérifié sur la doc officielle" center={formatStampDate(ctx.last_verified_at)} sub={"API " + ctx.version_api} size={168} animate />
           )}
         </div>
       </header>
