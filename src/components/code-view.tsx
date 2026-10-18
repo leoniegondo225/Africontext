@@ -6,8 +6,10 @@ export interface CodeMark {
   note?: string;
 }
 
+// Coloration minimale commune à TypeScript, Python, PHP et C++ : commentaires `//` et `#` (et directives `#include`),
+// chaînes, mots-clés, nombres.
 const TOKEN =
-  /(\/\/.*$)|("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')|\b(const|let|await|async|function|return|export|type|new|if|throw|import|from|as|typeof)\b|\b(\d+(?:\.\d+)?)\b/g;
+  /(\/\/.*$|#(?!\[).*$)|("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')|\b(const|let|await|async|function|return|export|type|new|if|else|elif|for|while|throw|raise|import|from|as|typeof|def|not|None|True|False|use|using|public|private|static|fn|null|true|false|auto|void|int|long|char|unsigned)\b|\b(\d+(?:\.\d+)?)\b/g;
 
 function tokenize(text: string, keyBase: string): ReactNode[] {
   const out: ReactNode[] = [];

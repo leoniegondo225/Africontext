@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { AfriContext } from "@/lib/types";
 import { countryName } from "@/lib/countries";
 import { formatStampDate } from "./stamp";
+import { ServiceLogo } from "./service-logo";
 
 export const TYPE_LABEL: Record<AfriContext["type"], string> = {
   cursorrules: ".cursorrules",
@@ -21,9 +22,12 @@ export function ContextRow({ ctx }: { ctx: AfriContext }) {
   return (
     <li className="group relative border-b border-trait/70">
       <div className="grid gap-x-8 gap-y-3 py-6 md:grid-cols-[minmax(0,13rem)_minmax(0,1fr)_auto] md:items-center">
-        <div>
-          <p className="display-narrow text-[1.9rem] font-semibold leading-none">{ctx.service}</p>
-          <p className="mt-2 text-xs text-voile">{TYPE_LABEL[ctx.type]}</p>
+        <div className="flex items-center gap-3">
+          <ServiceLogo service={ctx.service} size={44} />
+          <div>
+            <p className="display-narrow text-[1.9rem] font-semibold leading-none">{ctx.service}</p>
+            <p className="mt-2 text-xs text-voile">{TYPE_LABEL[ctx.type]}</p>
+          </div>
         </div>
         <div className="min-w-0">
           <h3 className="text-[1.05rem] font-medium">

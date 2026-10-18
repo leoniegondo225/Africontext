@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CodeView } from "./code-view";
 import { CopyCommand } from "./copy-command";
+import { ServiceLogo } from "./service-logo";
 
 type ServiceId = "wave" | "orange-money" | "fedapay";
 
@@ -197,8 +198,9 @@ export function SandboxConsole({ initial }: { initial: ServiceId }) {
             role="tab"
             aria-selected={service === s}
             onClick={() => load(s, 0)}
-            className={`rounded-full border px-4 py-2 text-sm transition-colors ${service === s ? "border-craie bg-craie text-nuit" : "border-trait text-brume hover:text-craie"}`}
+            className={`inline-flex items-center gap-2 rounded-full border py-1.5 pl-1.5 pr-4 text-sm transition-colors ${service === s ? "border-craie bg-craie text-nuit" : "border-trait text-brume hover:text-craie"}`}
           >
+            <ServiceLogo service={PRESETS[s].name} size={24} className="rounded-full" />
             {PRESETS[s].name}
           </button>
         ))}

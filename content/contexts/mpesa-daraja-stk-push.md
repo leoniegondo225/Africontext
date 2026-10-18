@@ -62,6 +62,65 @@ export function darajaTimestamp(d = new Date()): string {
 }
 ```
 
+```python
+import base64
+from datetime import datetime
+
+def daraja_password(short_code: str, passkey: str, timestamp: str) -> str:
+    return base64.b64encode((short_code + passkey + timestamp).encode()).decode()
+
+def daraja_timestamp(d: datetime | None = None) -> str:
+    return (d or datetime.now()).strftime("%Y%m%d%H%M%S")
+```
+
+```php
+<?php
+function darajaPassword(string $shortCode, string $passkey, string $timestamp): string
+{
+    return base64_encode($shortCode . $passkey . $timestamp);
+}
+
+function darajaTimestamp(?DateTimeInterface $d = null): string
+{
+    return ($d ?? new DateTimeImmutable())->format("YmdHis");
+}
+```
+
+```cpp
+#include <ctime>
+#include <string>
+
+std::string base64(const std::string& in) {
+    static const char* table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    std::string out;
+    unsigned val = 0;
+    int bits = -6;
+    for (unsigned char c : in) {
+        val = ((val << 8) | c) & 0xFFFFF;
+        bits += 8;
+        while (bits >= 0) {
+            out.push_back(table[(val >> bits) & 0x3F]);
+            bits -= 6;
+        }
+    }
+    if (bits > -6) out.push_back(table[((val << 8) >> (bits + 8)) & 0x3F]);
+    while (out.size() % 4) out.push_back('=');
+    return out;
+}
+
+std::string darajaPassword(const std::string& shortCode, const std::string& passkey, const std::string& timestamp) {
+    return base64(shortCode + passkey + timestamp);
+}
+
+std::string darajaTimestamp() {
+    std::time_t now = std::time(nullptr);
+    std::tm local = *std::localtime(&now);
+    char buf[15];
+    std::strftime(buf, sizeof buf, "%Y%m%d%H%M%S", &local);
+    return buf;
+}
+```
+
 ## Variables d'environnement
 
 - `MPESA_CONSUMER_KEY`

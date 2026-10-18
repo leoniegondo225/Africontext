@@ -82,6 +82,19 @@ tags: [${(known?.tags ?? ["api"]).join(", ")}]
 // Exemple typé et complet, testé contre la doc source.
 \`\`\`
 
+\`\`\`python
+# Le même exemple en Python (requests).
+\`\`\`
+
+\`\`\`php
+<?php
+// Le même exemple en PHP (Guzzle).
+\`\`\`
+
+\`\`\`cpp
+// Le même exemple en C++ (cpr et nlohmann/json).
+\`\`\`
+
 ## Variables d'environnement
 
 - \`${slugify(service).toUpperCase().replace(/-/g, "_")}_API_KEY\`

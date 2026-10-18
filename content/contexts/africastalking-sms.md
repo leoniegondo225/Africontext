@@ -61,6 +61,66 @@ export async function sendSms(to: string[], message: string) {
 }
 ```
 
+```python
+# pip install requests
+import os
+import requests
+
+def send_sms(to: list[str], message: str) -> dict:
+    res = requests.post(
+        "https://api.sandbox.africastalking.com/version1/messaging",
+        headers={"apiKey": os.environ["AT_API_KEY"], "Accept": "application/json"},
+        data={"username": os.environ.get("AT_USERNAME", "sandbox"), "to": ",".join(to), "message": message},
+        timeout=15,
+    )
+    return res.json()
+```
+
+```php
+<?php
+// composer require guzzlehttp/guzzle
+use GuzzleHttp\Client;
+
+function sendSms(array $to, string $message): array
+{
+    $res = (new Client(["timeout" => 15]))->post("https://api.sandbox.africastalking.com/version1/messaging", [
+        "headers" => ["apiKey" => getenv("AT_API_KEY"), "Accept" => "application/json"],
+        "form_params" => ["username" => getenv("AT_USERNAME") ?: "sandbox", "to" => implode(",", $to), "message" => $message],
+    ]);
+    return json_decode((string) $res->getBody(), true);
+}
+```
+
+```cpp
+// vcpkg install cpr nlohmann-json
+#include <cpr/cpr.h>
+#include <nlohmann/json.hpp>
+#include <cstdlib>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+using json = nlohmann::json;
+
+static std::string env(const char* name) {
+    const char* v = std::getenv(name);
+    if (!v) throw std::runtime_error(std::string("Variable d'environnement manquante : ") + name);
+    return v;
+}
+
+json sendSms(const std::vector<std::string>& to, const std::string& message) {
+    std::string recipients;
+    for (const auto& n : to) recipients += (recipients.empty() ? "" : ",") + n;
+    const char* user = std::getenv("AT_USERNAME");
+    auto res = cpr::Post(
+        cpr::Url{"https://api.sandbox.africastalking.com/version1/messaging"},
+        cpr::Header{{"apiKey", env("AT_API_KEY")}, {"Accept", "application/json"}},
+        cpr::Payload{{"username", user ? user : "sandbox"}, {"to", recipients}, {"message", message}},
+        cpr::Timeout{15000});
+    return json::parse(res.text);
+}
+```
+
 ## Variables d'environnement
 
 - `AT_USERNAME`

@@ -75,6 +75,103 @@ export async function initCinetPay(transactionId: string, amount: number): Promi
 }
 ```
 
+```python
+# pip install requests
+import math
+import os
+import requests
+
+def init_cinetpay(transaction_id: str, amount: int) -> str:
+    app_url = os.environ["APP_URL"]
+    res = requests.post(
+        "https://api-checkout.cinetpay.com/v2/payment",
+        json={
+            "apikey": os.environ["CINETPAY_API_KEY"],
+            "site_id": os.environ["CINETPAY_SITE_ID"],
+            "transaction_id": transaction_id,
+            "amount": math.ceil(amount / 5) * 5,
+            "currency": "XOF",
+            "description": "Commande " + transaction_id,
+            "notify_url": app_url + "/api/webhooks/cinetpay",
+            "return_url": app_url + "/paiement/retour",
+            "channels": "ALL",
+        },
+        timeout=15,
+    )
+    body = res.json()
+    if body.get("code") != "201":
+        raise RuntimeError(f"CinetPay {body.get('code')}")
+    return body["data"]["payment_url"]
+```
+
+```php
+<?php
+// composer require guzzlehttp/guzzle
+use GuzzleHttp\Client;
+
+function initCinetPay(string $transactionId, int $amount): string
+{
+    $appUrl = getenv("APP_URL");
+    $res = (new Client(["timeout" => 15, "http_errors" => false]))->post("https://api-checkout.cinetpay.com/v2/payment", [
+        "json" => [
+            "apikey" => getenv("CINETPAY_API_KEY"),
+            "site_id" => getenv("CINETPAY_SITE_ID"),
+            "transaction_id" => $transactionId,
+            "amount" => (int) (ceil($amount / 5) * 5),
+            "currency" => "XOF",
+            "description" => "Commande " . $transactionId,
+            "notify_url" => $appUrl . "/api/webhooks/cinetpay",
+            "return_url" => $appUrl . "/paiement/retour",
+            "channels" => "ALL",
+        ],
+    ]);
+    $body = json_decode((string) $res->getBody(), true);
+    if (($body["code"] ?? null) !== "201") {
+        throw new RuntimeException("CinetPay " . ($body["code"] ?? $res->getStatusCode()));
+    }
+    return $body["data"]["payment_url"];
+}
+```
+
+```cpp
+// vcpkg install cpr nlohmann-json
+#include <cpr/cpr.h>
+#include <nlohmann/json.hpp>
+#include <cstdlib>
+#include <stdexcept>
+#include <string>
+
+using json = nlohmann::json;
+
+static std::string env(const char* name) {
+    const char* v = std::getenv(name);
+    if (!v) throw std::runtime_error(std::string("Variable d'environnement manquante : ") + name);
+    return v;
+}
+
+std::string initCinetPay(const std::string& transactionId, long amount) {
+    const std::string appUrl = env("APP_URL");
+    auto res = cpr::Post(
+        cpr::Url{"https://api-checkout.cinetpay.com/v2/payment"},
+        cpr::Header{{"Content-Type", "application/json"}},
+        cpr::Body{json{
+            {"apikey", env("CINETPAY_API_KEY")},
+            {"site_id", env("CINETPAY_SITE_ID")},
+            {"transaction_id", transactionId},
+            {"amount", (amount + 4) / 5 * 5},  // multiple de 5 supérieur
+            {"currency", "XOF"},
+            {"description", "Commande " + transactionId},
+            {"notify_url", appUrl + "/api/webhooks/cinetpay"},
+            {"return_url", appUrl + "/paiement/retour"},
+            {"channels", "ALL"},
+        }.dump()},
+        cpr::Timeout{15000});
+    const auto body = json::parse(res.text);
+    if (body.value("code", "") != "201") throw std::runtime_error("CinetPay " + body.value("code", std::to_string(res.status_code)));
+    return body["data"]["payment_url"].get<std::string>();
+}
+```
+
 ## Variables d'environnement
 
 - `CINETPAY_API_KEY`

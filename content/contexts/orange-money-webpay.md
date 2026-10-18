@@ -96,6 +96,138 @@ export async function initOrangePayment(orderId: string, amount: number): Promis
 }
 ```
 
+```python
+# pip install requests
+import base64
+import os
+import requests
+
+def get_orange_token() -> str:
+    pair = os.environ["ORANGE_CLIENT_ID"] + ":" + os.environ["ORANGE_CLIENT_SECRET"]
+    basic = base64.b64encode(pair.encode()).decode()
+    res = requests.post(
+        "https://api.orange.com/oauth/v3/token",
+        headers={"Authorization": "Basic " + basic, "Content-Type": "application/x-www-form-urlencoded"},
+        data="grant_type=client_credentials",
+        timeout=15,
+    )
+    res.raise_for_status()
+    return res.json()["access_token"]
+
+def init_orange_payment(order_id: str, amount: int) -> dict:
+    token = get_orange_token()
+    app_url = os.environ["APP_URL"]
+    res = requests.post(
+        "https://api.orange.com/orange-money-webpay/dev/v1/webpayment",
+        headers={"Authorization": "Bearer " + token},
+        json={
+            "merchant_key": os.environ["ORANGE_MERCHANT_KEY"],
+            "currency": "OUV",
+            "order_id": order_id,
+            "amount": amount,
+            "return_url": app_url + "/paiement/retour",
+            "cancel_url": app_url + "/paiement/annule",
+            "notif_url": app_url + "/api/webhooks/orange",
+            "lang": "fr",
+            "reference": "Boutique",
+        },
+        timeout=15,
+    )
+    if res.status_code != 201:
+        raise RuntimeError(f"Orange Money {res.status_code}")
+    return res.json()  # pay_token, payment_url, notif_token
+```
+
+```php
+<?php
+// composer require guzzlehttp/guzzle
+use GuzzleHttp\Client;
+
+function getOrangeToken(Client $http): string
+{
+    $basic = base64_encode(getenv("ORANGE_CLIENT_ID") . ":" . getenv("ORANGE_CLIENT_SECRET"));
+    $res = $http->post("https://api.orange.com/oauth/v3/token", [
+        "headers" => ["Authorization" => "Basic " . $basic],
+        "form_params" => ["grant_type" => "client_credentials"],
+    ]);
+    return json_decode((string) $res->getBody(), true)["access_token"];
+}
+
+function initOrangePayment(string $orderId, int $amount): array
+{
+    $http = new Client(["timeout" => 15]);
+    $appUrl = getenv("APP_URL");
+    $res = $http->post("https://api.orange.com/orange-money-webpay/dev/v1/webpayment", [
+        "headers" => ["Authorization" => "Bearer " . getOrangeToken($http)],
+        "json" => [
+            "merchant_key" => getenv("ORANGE_MERCHANT_KEY"),
+            "currency" => "OUV",
+            "order_id" => $orderId,
+            "amount" => $amount,
+            "return_url" => $appUrl . "/paiement/retour",
+            "cancel_url" => $appUrl . "/paiement/annule",
+            "notif_url" => $appUrl . "/api/webhooks/orange",
+            "lang" => "fr",
+            "reference" => "Boutique",
+        ],
+    ]);
+    if ($res->getStatusCode() !== 201) {
+        throw new RuntimeException("Orange Money " . $res->getStatusCode());
+    }
+    return json_decode((string) $res->getBody(), true); // pay_token, payment_url, notif_token
+}
+```
+
+```cpp
+// vcpkg install cpr nlohmann-json
+#include <cpr/cpr.h>
+#include <nlohmann/json.hpp>
+#include <cstdlib>
+#include <stdexcept>
+#include <string>
+
+using json = nlohmann::json;
+
+static std::string env(const char* name) {
+    const char* v = std::getenv(name);
+    if (!v) throw std::runtime_error(std::string("Variable d'environnement manquante : ") + name);
+    return v;
+}
+
+std::string getOrangeToken() {
+    auto res = cpr::Post(
+        cpr::Url{"https://api.orange.com/oauth/v3/token"},
+        // Basic base64(client_id:client_secret), calculé par cpr.
+        cpr::Authentication{env("ORANGE_CLIENT_ID"), env("ORANGE_CLIENT_SECRET"), cpr::AuthMode::BASIC},
+        cpr::Payload{{"grant_type", "client_credentials"}},
+        cpr::Timeout{15000});
+    if (res.status_code < 200 || res.status_code >= 300)
+        throw std::runtime_error("Orange OAuth " + std::to_string(res.status_code) + ": " + res.text);
+    return json::parse(res.text)["access_token"].get<std::string>();
+}
+
+json initOrangePayment(const std::string& orderId, long amount) {
+    const std::string appUrl = env("APP_URL");
+    auto res = cpr::Post(
+        cpr::Url{"https://api.orange.com/orange-money-webpay/dev/v1/webpayment"},
+        cpr::Header{{"Authorization", "Bearer " + getOrangeToken()}, {"Content-Type", "application/json"}},
+        cpr::Body{json{
+            {"merchant_key", env("ORANGE_MERCHANT_KEY")},
+            {"currency", "OUV"},
+            {"order_id", orderId},
+            {"amount", amount},
+            {"return_url", appUrl + "/paiement/retour"},
+            {"cancel_url", appUrl + "/paiement/annule"},
+            {"notif_url", appUrl + "/api/webhooks/orange"},
+            {"lang", "fr"},
+            {"reference", "Boutique"},
+        }.dump()},
+        cpr::Timeout{15000});
+    if (res.status_code != 201) throw std::runtime_error("Orange Money " + std::to_string(res.status_code));
+    return json::parse(res.text);  // pay_token, payment_url, notif_token
+}
+```
+
 ## Variables d'environnement
 
 - `ORANGE_CLIENT_ID`

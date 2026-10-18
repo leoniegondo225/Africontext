@@ -59,6 +59,83 @@ export async function createFlwLink(txRef: string, amount: number, email: string
 }
 ```
 
+```python
+# pip install requests
+import os
+import requests
+
+def create_flw_link(tx_ref: str, amount: float, email: str) -> str:
+    res = requests.post(
+        "https://api.flutterwave.com/v3/payments",
+        headers={"Authorization": "Bearer " + os.environ["FLW_SECRET_KEY"]},
+        json={
+            "tx_ref": tx_ref,
+            "amount": amount,
+            "currency": "NGN",
+            "redirect_url": os.environ["APP_URL"] + "/retour",
+            "customer": {"email": email},
+        },
+        timeout=15,
+    )
+    res.raise_for_status()
+    return res.json()["data"]["link"]
+```
+
+```php
+<?php
+// composer require guzzlehttp/guzzle
+use GuzzleHttp\Client;
+
+function createFlwLink(string $txRef, float $amount, string $email): string
+{
+    $res = (new Client(["timeout" => 15]))->post("https://api.flutterwave.com/v3/payments", [
+        "headers" => ["Authorization" => "Bearer " . getenv("FLW_SECRET_KEY")],
+        "json" => [
+            "tx_ref" => $txRef,
+            "amount" => $amount,
+            "currency" => "NGN",
+            "redirect_url" => getenv("APP_URL") . "/retour",
+            "customer" => ["email" => $email],
+        ],
+    ]);
+    return json_decode((string) $res->getBody(), true)["data"]["link"];
+}
+```
+
+```cpp
+// vcpkg install cpr nlohmann-json
+#include <cpr/cpr.h>
+#include <nlohmann/json.hpp>
+#include <cstdlib>
+#include <stdexcept>
+#include <string>
+
+using json = nlohmann::json;
+
+static std::string env(const char* name) {
+    const char* v = std::getenv(name);
+    if (!v) throw std::runtime_error(std::string("Variable d'environnement manquante : ") + name);
+    return v;
+}
+
+std::string createFlwLink(const std::string& txRef, double amount, const std::string& email) {
+    auto res = cpr::Post(
+        cpr::Url{"https://api.flutterwave.com/v3/payments"},
+        cpr::Header{{"Authorization", "Bearer " + env("FLW_SECRET_KEY")}, {"Content-Type", "application/json"}},
+        cpr::Body{json{
+            {"tx_ref", txRef},
+            {"amount", amount},
+            {"currency", "NGN"},
+            {"redirect_url", env("APP_URL") + "/retour"},
+            {"customer", {{"email", email}}},
+        }.dump()},
+        cpr::Timeout{15000});
+    if (res.status_code < 200 || res.status_code >= 300)
+        throw std::runtime_error("Flutterwave " + std::to_string(res.status_code) + ": " + res.text);
+    return json::parse(res.text)["data"]["link"].get<std::string>();
+}
+```
+
 ## Variables d'environnement
 
 - `FLW_SECRET_KEY`

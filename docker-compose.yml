@@ -20,6 +20,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
+        required: false
 
   # Nightly doc watch (F12): calls the watch endpoint with the cron secret.
   veille:
@@ -33,9 +34,11 @@ services:
     depends_on:
       - web
 
-  # Base PostgreSQL (schéma Prisma dans prisma/). Pour l'instance managée Systalink, pointez DATABASE_URL dessus.
+  # Base PostgreSQL locale (schéma Prisma dans prisma/), lancée avec `--profile local-db`.
+  # Avec Supabase, ne pas l'activer : DATABASE_URL et DIRECT_URL pointent vers le projet Supabase.
   db:
     image: postgres:16-alpine
+    profiles: ["local-db"]
     restart: unless-stopped
     environment:
       POSTGRES_DB: africontext

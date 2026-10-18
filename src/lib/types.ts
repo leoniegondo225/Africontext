@@ -14,6 +14,17 @@ export type SpecSectionKey =
   | "example"
   | "env";
 
+export type ProofLang = "python" | "php" | "cpp";
+
+/** Le même test écrit dans un autre langage. Les champs reprennent ceux de `Proof`. */
+export interface ProofVariant {
+  prompt: string;
+  without: string;
+  withContext: string;
+  inventions: { text: string; note: string }[];
+  fixes: string[];
+}
+
 export interface Proof {
   prompt: string;
   model: string;
@@ -25,6 +36,8 @@ export interface Proof {
   fixes: string[];
   withoutResult: string;
   withResult: string;
+  /** Versions Python, PHP et C++. Les champs de premier niveau sont la version TypeScript. */
+  variants?: Partial<Record<ProofLang, ProofVariant>>;
 }
 
 export interface ContextStats {

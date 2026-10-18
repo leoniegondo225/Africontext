@@ -96,6 +96,111 @@ export async function createWaveCheckout(orderId: string, amountXof: number): Pr
 }
 ```
 
+```python
+# pip install requests
+import os
+import uuid
+import requests
+
+def create_wave_checkout(order_id: str, amount_xof: int) -> dict:
+    res = requests.post(
+        "https://api.wave.com/v1/checkout/sessions",
+        headers={
+            "Authorization": "Bearer " + os.environ["WAVE_API_KEY"],
+            "Idempotency-Key": str(uuid.uuid4()),
+        },
+        json={
+            "amount": str(round(amount_xof)),
+            "currency": "XOF",
+            "client_reference": order_id,
+            "success_url": os.environ["APP_URL"] + "/paiement/succes",
+            "error_url": os.environ["APP_URL"] + "/paiement/erreur",
+        },
+        timeout=15,
+    )
+    if not res.ok:
+        raise RuntimeError(f"Wave {res.status_code}: {res.text}")
+    return res.json()  # id, wave_launch_url, checkout_status, payment_status
+```
+
+```php
+<?php
+// composer require guzzlehttp/guzzle ramsey/uuid
+use GuzzleHttp\Client;
+use Ramsey\Uuid\Uuid;
+
+function createWaveCheckout(string $orderId, int $amountXof): array
+{
+    // Guzzle lève une exception sur 4xx et 5xx.
+    $res = (new Client(["timeout" => 15]))->post("https://api.wave.com/v1/checkout/sessions", [
+        "headers" => [
+            "Authorization" => "Bearer " . getenv("WAVE_API_KEY"),
+            "Idempotency-Key" => Uuid::uuid4()->toString(),
+        ],
+        "json" => [
+            "amount" => (string) $amountXof,
+            "currency" => "XOF",
+            "client_reference" => $orderId,
+            "success_url" => getenv("APP_URL") . "/paiement/succes",
+            "error_url" => getenv("APP_URL") . "/paiement/erreur",
+        ],
+    ]);
+    return json_decode((string) $res->getBody(), true); // id, wave_launch_url, checkout_status, payment_status
+}
+```
+
+```cpp
+// vcpkg install cpr nlohmann-json
+#include <cpr/cpr.h>
+#include <nlohmann/json.hpp>
+#include <cstdlib>
+#include <stdexcept>
+#include <string>
+#include <random>
+
+using json = nlohmann::json;
+
+static std::string env(const char* name) {
+    const char* v = std::getenv(name);
+    if (!v) throw std::runtime_error(std::string("Variable d'environnement manquante : ") + name);
+    return v;
+}
+
+static std::string uuid4() {
+    static std::mt19937_64 gen{std::random_device{}()};
+    std::uniform_int_distribution<int> hex(0, 15);
+    const char* digits = "0123456789abcdef";
+    std::string s = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx";
+    for (char& c : s) {
+        if (c == 'x') c = digits[hex(gen)];
+        else if (c == 'y') c = digits[8 + hex(gen) % 4];
+    }
+    return s;
+}
+
+json createWaveCheckout(const std::string& orderId, long amountXof) {
+    const std::string appUrl = env("APP_URL");
+    auto res = cpr::Post(
+        cpr::Url{"https://api.wave.com/v1/checkout/sessions"},
+        cpr::Header{
+            {"Authorization", "Bearer " + env("WAVE_API_KEY")},
+            {"Content-Type", "application/json"},
+            {"Idempotency-Key", uuid4()},
+        },
+        cpr::Body{json{
+            {"amount", std::to_string(amountXof)},
+            {"currency", "XOF"},
+            {"client_reference", orderId},
+            {"success_url", appUrl + "/paiement/succes"},
+            {"error_url", appUrl + "/paiement/erreur"},
+        }.dump()},
+        cpr::Timeout{15000});
+    if (res.status_code < 200 || res.status_code >= 300)
+        throw std::runtime_error("Wave " + std::to_string(res.status_code) + ": " + res.text);
+    return json::parse(res.text);  // id, wave_launch_url, checkout_status, payment_status
+}
+```
+
 ## Variables d'environnement
 
 - `WAVE_API_KEY`

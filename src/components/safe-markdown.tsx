@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { CodeTabs } from "./code-tabs";
 import { CodeView } from "./code-view";
 
 /**
@@ -58,14 +59,27 @@ export function SafeMarkdown({ source }: { source: string }) {
   while (i < lines.length) {
     const line = lines[i];
     if (line.startsWith("```")) {
-      const body: string[] = [];
-      i++;
-      while (i < lines.length && !lines[i].startsWith("```")) body.push(lines[i++]);
-      i++;
+      // Des blocs de code qui se suivent sont le même exemple en plusieurs langages : un onglet par bloc.
+      const group: { lang: string; code: string }[] = [];
+      while (i < lines.length && lines[i].startsWith("```")) {
+        const lang = lines[i].slice(3).trim();
+        const body: string[] = [];
+        i++;
+        while (i < lines.length && !lines[i].startsWith("```")) body.push(lines[i++]);
+        i++;
+        group.push({ lang, code: body.join("\n") });
+        let next = i;
+        while (next < lines.length && !lines[next].trim()) next++;
+        if (next < lines.length && lines[next].startsWith("```")) i = next;
+      }
       blocks.push(
-        <div key={b++} className="rounded-xl border border-trait bg-nuit px-2 py-3 sm:px-3">
-          <CodeView code={body.join("\n")} />
-        </div>,
+        group.length > 1 ? (
+          <CodeTabs key={b++} blocks={group} />
+        ) : (
+          <div key={b++} className="rounded-xl border border-trait bg-nuit px-2 py-3 sm:px-3">
+            <CodeView code={group[0].code} />
+          </div>
+        ),
       );
       continue;
     }

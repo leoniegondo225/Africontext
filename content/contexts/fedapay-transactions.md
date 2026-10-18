@@ -78,6 +78,97 @@ export async function createFedaPayLink(amount: number, description: string): Pr
 }
 ```
 
+```python
+# pip install requests
+import os
+import requests
+
+BASE = "https://api.fedapay.com/v1" if os.environ.get("FEDAPAY_ENV") == "live" else "https://sandbox-api.fedapay.com/v1"
+
+def create_fedapay_link(amount: int, description: str) -> str:
+    headers = {"Authorization": "Bearer " + os.environ["FEDAPAY_SECRET_KEY"]}
+    created = requests.post(
+        BASE + "/transactions",
+        headers=headers,
+        json={
+            "description": description,
+            "amount": amount,
+            "currency": {"iso": "XOF"},
+            "callback_url": os.environ["APP_URL"] + "/paiement/retour",
+        },
+        timeout=15,
+    )
+    created.raise_for_status()
+    tx = created.json()["v1/transaction"]
+    token_res = requests.post(f"{BASE}/transactions/{tx['id']}/token", headers=headers, timeout=15)
+    token_res.raise_for_status()
+    return token_res.json()["url"]
+```
+
+```php
+<?php
+// composer require guzzlehttp/guzzle
+use GuzzleHttp\Client;
+
+function createFedaPayLink(int $amount, string $description): string
+{
+    $base = getenv("FEDAPAY_ENV") === "live" ? "https://api.fedapay.com/v1" : "https://sandbox-api.fedapay.com/v1";
+    $http = new Client(["timeout" => 15]);
+    $headers = ["Authorization" => "Bearer " . getenv("FEDAPAY_SECRET_KEY")];
+    $created = $http->post($base . "/transactions", [
+        "headers" => $headers,
+        "json" => [
+            "description" => $description,
+            "amount" => $amount,
+            "currency" => ["iso" => "XOF"],
+            "callback_url" => getenv("APP_URL") . "/paiement/retour",
+        ],
+    ]);
+    $tx = json_decode((string) $created->getBody(), true)["v1/transaction"];
+    $tokenRes = $http->post($base . "/transactions/" . $tx["id"] . "/token", ["headers" => $headers]);
+    return json_decode((string) $tokenRes->getBody(), true)["url"];
+}
+```
+
+```cpp
+// vcpkg install cpr nlohmann-json
+#include <cpr/cpr.h>
+#include <nlohmann/json.hpp>
+#include <cstdlib>
+#include <stdexcept>
+#include <string>
+
+using json = nlohmann::json;
+
+static std::string env(const char* name) {
+    const char* v = std::getenv(name);
+    if (!v) throw std::runtime_error(std::string("Variable d'environnement manquante : ") + name);
+    return v;
+}
+
+std::string createFedaPayLink(long amount, const std::string& description) {
+    const char* mode = std::getenv("FEDAPAY_ENV");
+    const std::string base = (mode && std::string(mode) == "live") ? "https://api.fedapay.com/v1" : "https://sandbox-api.fedapay.com/v1";
+    const cpr::Header headers{{"Authorization", "Bearer " + env("FEDAPAY_SECRET_KEY")}, {"Content-Type", "application/json"}};
+    auto res = cpr::Post(
+        cpr::Url{base + "/transactions"},
+        headers,
+        cpr::Body{json{
+            {"description", description},
+            {"amount", amount},
+            {"currency", {{"iso", "XOF"}}},
+            {"callback_url", env("APP_URL") + "/paiement/retour"},
+        }.dump()},
+        cpr::Timeout{15000});
+    if (res.status_code < 200 || res.status_code >= 300)
+        throw std::runtime_error("FedaPay " + std::to_string(res.status_code) + ": " + res.text);
+    const auto tx = json::parse(res.text)["v1/transaction"];
+    auto tokenRes = cpr::Post(cpr::Url{base + "/transactions/" + std::to_string(tx["id"].get<long>()) + "/token"}, headers, cpr::Timeout{15000});
+    if (tokenRes.status_code != 200) throw std::runtime_error("FedaPay token " + std::to_string(tokenRes.status_code));
+    return json::parse(tokenRes.text)["url"].get<std::string>();
+}
+```
+
 ## Variables d'environnement
 
 - `FEDAPAY_SECRET_KEY`

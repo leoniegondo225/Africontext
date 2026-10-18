@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AfricaGlobe } from "@/components/africa-globe";
 import { formatNumber } from "@/components/context-row";
+import { ServiceLogo } from "@/components/service-logo";
 import { coverageGlobe, impactTotals, publicContexts } from "@/lib/catalog";
 import { countryName } from "@/lib/countries";
 import { MINUTES_SAVED_PER_INSTALL } from "@/lib/store";
@@ -48,8 +49,9 @@ export default function ImpactPage() {
             const total = c.stats.installs + c.stats.copies;
             return (
               <li key={c.slug} className="grid grid-cols-[minmax(0,12rem)_1fr_auto] items-center gap-4 text-sm">
-                <Link href={`/contextes/${c.slug}`} className="truncate hover:text-safran-2">
-                  {c.service}
+                <Link href={`/contextes/${c.slug}`} className="flex min-w-0 items-center gap-2 hover:text-safran-2">
+                  <ServiceLogo service={c.service} size={20} className="rounded" />
+                  <span className="truncate">{c.service}</span>
                 </Link>
                 <div className="flex h-3 overflow-hidden rounded-full bg-nuit-2" role="img" aria-label={`${c.stats.installs} installations, ${c.stats.copies} copies`}>
                   <span className="h-full bg-safran" style={{ width: `${(c.stats.installs / max) * 100}%` }} />

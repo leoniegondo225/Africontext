@@ -6,6 +6,7 @@ import { TOOL_LABEL, TYPE_LABEL, formatNumber } from "@/components/context-row";
 import { InstallPanel } from "@/components/install-panel";
 import { ProofDiff } from "@/components/proof-diff";
 import { SafeMarkdown } from "@/components/safe-markdown";
+import { ServiceLogo } from "@/components/service-logo";
 import { Stamp, formatStampDate } from "@/components/stamp";
 import { VoteReport } from "@/components/vote-report";
 import { VOTER_COOKIE, getSession } from "@/lib/auth";
@@ -52,7 +53,10 @@ export default async function ContextPage({ params }: Params) {
 
       <header className="relative mt-8 grid gap-8 border-b border-trait/70 pb-10 lg:grid-cols-[1fr_auto]">
         <div>
-          <p className="display-narrow text-[clamp(3rem,2rem+5vw,6rem)] font-semibold leading-[0.9]">{ctx.service}</p>
+          <div className="flex items-center gap-5">
+            <ServiceLogo service={ctx.service} size={88} className="rounded-2xl" />
+            <p className="display-narrow text-[clamp(3rem,2rem+5vw,6rem)] font-semibold leading-[0.9]">{ctx.service}</p>
+          </div>
           <h1 className="mt-4 text-2xl font-medium sm:text-3xl">{ctx.title}</h1>
           <p className="mt-4 max-w-[60ch] text-lg leading-relaxed text-brume">{ctx.description}</p>
           <div className="mt-6">

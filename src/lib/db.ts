@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
 
@@ -11,7 +12,11 @@ const g = globalThis as unknown as { __afxPrisma?: PrismaClient; __afxQueue?: Pr
 export function db(): PrismaClient | null {
   const url = process.env.DATABASE_URL;
   if (!url) return null;
-  g.__afxPrisma ??= new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
+  // Supabase signe ses certificats avec sa propre autorité : DATABASE_CA_CERT pointe vers
+  // le certificat téléchargé depuis le dashboard, pour que pg vérifie la chaîne.
+  const caPath = process.env.DATABASE_CA_CERT;
+  const ssl = caPath ? { ca: readFileSync(caPath, "utf8") } : undefined;
+  g.__afxPrisma ??= new PrismaClient({ adapter: new PrismaPg({ connectionString: url, ssl }) });
   return g.__afxPrisma;
 }
 

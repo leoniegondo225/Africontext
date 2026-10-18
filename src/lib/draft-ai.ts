@@ -21,7 +21,7 @@ Règles strictes :
 - Réponds uniquement avec le fichier Markdown complet, sans phrase avant ni après, sans bloc \`\`\` autour.
 - Garde exactement l'en-tête (front matter) et les huit titres de section du squelette fourni, dans le même ordre : ${SPEC_SECTIONS.map((s) => s.heading).join(", ")}.
 - Ajuste les champs de l'en-tête (title, pays, version_api, tags) d'après la doc. Garde source_url tel quel.
-- La section « Exemple minimal » contient un exemple TypeScript complet et typé. La section « Pièges courants » liste ce qu'une IA inventerait sans la doc.
+- La section « Exemple minimal » contient le même exemple complet en quatre blocs qui se suivent : TypeScript typé (\`\`\`ts), Python avec requests (\`\`\`python), PHP avec Guzzle (\`\`\`php), C++ avec cpr et nlohmann/json (\`\`\`cpp). La section « Pièges courants » liste ce qu'une IA inventerait sans la doc.
 - Écris en français.`;
 
 export function aiDraftEnabled(): boolean {

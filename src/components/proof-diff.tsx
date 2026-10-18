@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Proof } from "@/lib/types";
+import type { Proof, ProofLang } from "@/lib/types";
+import { LangTabs, useCodeLang } from "./code-tabs";
 import { CodeView } from "./code-view";
 import { Stamp, formatStampDate } from "./stamp";
 
@@ -45,17 +46,22 @@ export function ProofDiff({
     setMode(m);
   };
 
+  const langs = ["ts", ...Object.keys(proof.variants ?? {})];
+  const [lang, setLang] = useCodeLang(langs);
+  const shown = { ...proof, ...(lang === "ts" ? {} : proof.variants?.[lang as ProofLang]) };
+
   const isWith = mode === "with";
   const marks = isWith
-    ? proof.fixes.map((text) => ({ text, kind: "fixed" as const }))
-    : proof.inventions.map((i) => ({ text: i.text, kind: "invented" as const, note: i.note }));
+    ? shown.fixes.map((text) => ({ text, kind: "fixed" as const }))
+    : shown.inventions.map((i) => ({ text: i.text, kind: "invented" as const, note: i.note }));
 
   return (
     <figure className="relative overflow-hidden rounded-2xl border border-trait bg-nuit-2 shadow-[0_40px_120px_-40px_rgb(5_6_30/0.9)]">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-3 border-b border-trait px-4 py-3 sm:px-5">
         <p className="code min-w-0 flex-1 truncate text-brume">
-          <span className="text-safran">›</span> {proof.prompt}
+          <span className="text-safran">›</span> {shown.prompt}
         </p>
+        {langs.length > 1 ? <LangTabs langs={langs} value={lang} onChange={setLang} /> : null}
         <div role="tablist" aria-label="Sortie de l'IA" className="flex rounded-full border border-trait bg-nuit p-1 text-sm">
           <button
             role="tab"
@@ -77,7 +83,7 @@ export function ProofDiff({
       </div>
 
       <div className={`relative px-2 py-4 sm:px-4 ${compact ? "max-h-[420px] overflow-y-auto scroll-thin" : ""}`} role="tabpanel">
-        <CodeView key={mode} code={isWith ? proof.withContext : proof.without} marks={marks} showNotes={!isWith} />
+        <CodeView key={mode + lang} code={isWith ? shown.withContext : shown.without} marks={marks} showNotes={!isWith} />
         {isWith ? (
           <div key={stampKey} className="pointer-events-none absolute right-3 top-3 sm:right-8 sm:top-6">
             <Stamp ring="Vérifié sur la doc officielle" center={formatStampDate(verifiedAt)} sub="AFRICONTEXT" animate size={compact ? 104 : 136} />
@@ -91,8 +97,8 @@ export function ProofDiff({
         </span>
         <span className="text-brume">
           {isWith
-            ? `${proof.fixes.length} éléments conformes à la documentation`
-            : `${proof.inventions.length} inventions de l'IA`}
+            ? `${shown.fixes.length} éléments conformes à la documentation`
+            : `${shown.inventions.length} inventions de l'IA`}
         </span>
         <span className="text-voile">Modèle testé : {proof.model}</span>
         <a href={sourceUrl} target="_blank" rel="noreferrer" className="ml-auto text-brume underline decoration-trait underline-offset-4 hover:text-craie">
