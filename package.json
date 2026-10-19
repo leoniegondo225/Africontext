@@ -9,7 +9,8 @@
     "start": "next start",
     "typecheck": "prisma generate && tsc --noEmit",
     "postinstall": "prisma generate",
-    "db:migrate": "prisma migrate deploy"
+    "db:migrate": "prisma migrate deploy",
+    "db:seed-admin": "node --env-file=.env prisma/seed-admin.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.135.0",

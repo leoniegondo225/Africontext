@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getSession, githubConfigured } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 
 export const metadata: Metadata = { title: "Connexion" };
 export const dynamic = "force-dynamic";
@@ -23,7 +23,7 @@ export default async function ConnexionPage({ searchParams }: { searchParams: Pr
   const { erreur, mode } = await searchParams;
   const signup = mode === "inscription";
   const user = await getSession();
-  const demo = !githubConfigured() || process.env.DEMO_LOGIN === "1";
+  const demo = process.env.DEMO_LOGIN === "1";
 
   return (
     <div className="mx-auto max-w-md px-4 pt-20">
